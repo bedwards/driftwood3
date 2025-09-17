@@ -2,6 +2,7 @@
 # pip install websockets sounddevice numpy
 from itertools import cycle
 import asyncio, websockets, sounddevice as sd, numpy as np, re
+from config import websockets_kwargs
 
 WS = "ws://192.168.1.121:8765"
 n_context = 22  # number of previous messages from the convo given as context in the prompt
@@ -67,15 +68,7 @@ async def ask(ws, prompt):
             else: sd.play(audio, sr or 22050, blocking=False)
 
 async def run():
-    async with websockets.connect(
-                WS,
-                ping_interval=20,
-                ping_timeout=10,
-                close_timeout=10,
-                max_size=1048576,
-                max_queue=32,
-                compression=None
-            ) as ws:
+    async with websockets.connect(WS, **websockets_kwargs) as ws:
         for persona in personas:
             prompt = f"""
             Act as if you are {persona["writer"]}.

@@ -4,6 +4,7 @@ import os, asyncio, numpy as np, websockets, torch, re
 from itertools import cycle
 from ollama import Client
 from TTS.api import TTS
+from config import websockets_kwargs
 
 OLLAMA_HOST = "127.0.0.1:11434"
 
@@ -24,6 +25,7 @@ model = cycle(
 )
 
 SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
+
 
 async def stream_audio(ws, tts, speaker, lang, text, sample_rate):
     """Helper function to generate and stream audio for given text"""
@@ -95,18 +97,7 @@ async def handler(ws):
 async def main():
     port = 8765
     print(f'Listening on {port}')
-
-    async with websockets.serve(
-                handler,
-                "0.0.0.0",
-                port,
-                ping_interval=30,     # Send ping every n seconds
-                ping_timeout=300,     # Wait n seconds for pong
-                close_timeout=15,     # Time to wait for clean close
-                max_size=1048576,     # n MB message limit
-                max_queue=32,         # Limit queued messages
-                compression=None      # Disable compression for lower latency
-            ):
+    async with websockets.serve(handler, "0.0.0.0", port, **websockets_kwargs):
         await asyncio.Future()
 
 if __name__ == "__main__":
