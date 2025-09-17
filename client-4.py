@@ -67,7 +67,15 @@ async def ask(ws, prompt):
             else: sd.play(audio, sr or 22050, blocking=False)
 
 async def run():
-    async with websockets.connect(WS, max_size=None) as ws:
+    async with websockets.connect(
+                WS,
+                ping_interval=20,
+                ping_timeout=10,
+                close_timeout=10,
+                max_size=1048576,
+                max_queue=32,
+                compression=None
+            ) as ws:
         for persona in personas:
             prompt = f"""
             Act as if you are {persona["writer"]}.

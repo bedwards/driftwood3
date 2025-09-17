@@ -66,8 +66,18 @@ async def handler(ws):
 async def main():
     port = 8765
     print(f'Listening on {port}')
+
     async with websockets.serve(
-            handler, "0.0.0.0", port, max_size=None):  # ping_interval=None
+                handler,
+                "0.0.0.0",
+                port,
+                ping_interval=20,     # Send ping every 20 seconds
+                ping_timeout=10,      # Wait 10 seconds for pong
+                close_timeout=10,     # Time to wait for clean close
+                max_size=1048576,     # 1MB message limit
+                max_queue=32,         # Limit queued messages
+                compression=None      # Disable compression for lower latency
+            )
         await asyncio.Future()
 
 if __name__ == "__main__":
