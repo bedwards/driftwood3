@@ -77,7 +77,7 @@ async def main():
                 max_size=1048576,     # 1MB message limit
                 max_queue=32,         # Limit queued messages
                 compression=None      # Disable compression for lower latency
-            )
+            ):
         await asyncio.Future()
 
 if __name__ == "__main__":
