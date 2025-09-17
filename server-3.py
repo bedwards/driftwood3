@@ -19,7 +19,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.i
 assert DEVICE == "mps"
 
 TTS_MODEL_INFO = [
-    ("tts_models/multilingual/multi-dataset/xtts_v2", "p_225"),  # male
+    ("tts_models/multilingual/multi-dataset/xtts_v2", "p225"),  # male
     ("tts_models/en/ljspeech/fast_pitch", None),  # female
 ]
 
