@@ -77,6 +77,7 @@ async def run():
             Give instructions that another writer could use to write dialogue coming from this character.
             Stick to the manner in which the character speaks, not their beliefs or values.
             Briefly. No meta-commentary. Only instructions to a would-be writer.
+            Do not give her a name. Her name is {persona["name"]}
             """
             persona['description'] = await ask(ws, prompt)
         convo = []
