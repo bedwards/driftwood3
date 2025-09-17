@@ -76,6 +76,7 @@ async def run():
             Describe a detailed manner of speaking that this character exhibits.
             Give instructions that another writer could use to write dialogue coming from this character.
             Stick to the manner in which the character speaks, not their beliefs or values.
+            Briefly. No meta-commentary. Only instructions to a would-be writer.
             """
             persona['description'] = await ask(ws, prompt)
         convo = []
