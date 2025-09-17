@@ -29,8 +29,8 @@ async def stream_audio(ws, tts, speaker, lang, text, sample_rate):
     """Helper function to generate and stream audio for given text"""
     try:
         audio = np.asarray(tts.tts(text, speaker=speaker, language=lang), dtype=np.float32)
-    except ZeroDivisionError:
-        print(f"ZeroDivisionError in {tts.model_name}")
+    except (ZeroDivisionError, RuntimeError) as e::
+        print(f"{e!r} in {tts.model_name}")
         return
     for i in range(0, len(audio), sample_rate // 2):
         await ws.send(audio[i:i + sample_rate // 2].tobytes())
