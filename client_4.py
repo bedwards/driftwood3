@@ -4,24 +4,117 @@ import random
 from itertools import cycle
 import asyncio, websockets, sounddevice as sd, numpy as np, re
 from config import websockets_kwargs
+from topics import topics
 
 WS = "ws://192.168.1.121:8765"
 n_context = 5  # number of previous messages from the convo given as context in the prompt
 
-topic = "Certainty and scarcity in jason Hickel's Less is More and Roberto Bolaño's 2666"
+topic = random.choice(topics)
+
+thinkers = [
+    "Jason Hickel",
+    "David Graeber",
+    "Slavoj Žižek",
+    "Ivan Krastev",
+    "Stephen Holmes",
+    "Robert Kagan",
+    "David Hume",
+    "Michel Foucault",
+    "Daniel Kahneman",
+    "Amos Tversky",
+    "Richard Rorty",
+    "Jürgen Habermas",
+    "Harry Frankfurt",
+    "Jonathan Haidt",
+    "Bruno Latour",
+    "Miranda Fricker",
+    "Jason Stanley",
+    "Timothy Snyder",
+    "W. V. O. Quine",
+    "Dan Kahan",
+    "Richard Bernstein",
+    "Linda Zagzebski",
+    "Bernard Williams",
+    "Plato",
+    "Aristotle",
+    "Marcus Aurelius",
+    "Epicurus",
+    "Siddhartha Gautama (Buddha)",
+    "Confucius",
+    "Lao Tzu",
+    "Baruch Spinoza",
+    "René Descartes",
+    "David Hume",
+    "Immanuel Kant",
+    "Søren Kierkegaard",
+    "Friedrich Nietzsche",
+    "Ludwig Wittgenstein",
+    "Jean-Paul Sartre",
+    "Simone de Beauvoir",
+    "Hannah Arendt",
+    "Rumi",
+    "Martha Nussbaum",
+]
+
+writers = [
+    "Roberto Bolaño",
+    "Denis Johnson",
+    "Cormac McCarthy",
+    "George Orwell",
+    "Fernando Pessoa",
+    "Percival Everett",
+    "Rachel Cusk",
+    "Leonora Carrington",
+    "Robert Kagan",
+    "Ted Chiang",
+    "J. M. Coetzee",
+    "Joy Williams",
+    "Karl Ove Knausgaard",
+    "Anne Carson",
+    "Zadie Smith",
+    "Jane Austen",
+    "Charles Dickens",
+    "Oscar Wilde",
+    "Ernest Hemingway",
+    "Virginia Woolf",
+    "James Joyce",
+    "Franz Kafka",
+    "J.R.R. Tolkien",
+    "Kurt Vonnegut",
+    "Jorge Luis Borges",
+    "Gabriel García Márquez",
+    "James Baldwin",
+    "Italo Calvino",
+    "Toni Morrison",
+    "Ursula K. Le Guin",
+    "Haruki Murakami",
+    "Kazuo Ishiguro",
+    "Margaret Atwood",
+    "Octavia Butler",
+    "Thomas Pynchon",
+]
+
 
 personas = [
     {
         "name": "Cindy",
-        "thinker": "Miranda Fricker",
-        "writer": "Leonora Carrington",
+        "thinker": random.choice(thinkers),
+        "writer": random.choice(writers),
     },
     {
         "name": "Rebecca",
-        "thinker": "Linda Zagzebski",
-        "writer": "Zadie Smith",
+        "thinker": random.choice(thinkers),
+        "writer": random.choice(writers),
     },
 ]
+
+while personas[0]["thinker"] == personas[1]["thinker"]:
+    print(".")
+    personas[1]["thinker"] = random.choice(thinkers)
+
+while personas[0]["writer"] == personas[1]["writer"]:
+    print("o")
+    personas[1]["writer"] = random.choice(writers)
 
 
 def create_prompt(persona, convo):
