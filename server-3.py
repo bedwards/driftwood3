@@ -19,8 +19,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.i
 assert DEVICE == "mps"
 
 TTS_MODEL_INFO = [
-    ("tts_models/multilingual/multi-dataset/xtts_v2", "p225"),  # male
     ("tts_models/en/ljspeech/fast_pitch", None),  # female
+    ("tts_models/en/blizzard2013/hifigan_v2", None),  # male
 ]
 
 tts_models = cycle((TTS(name).to(DEVICE), speaker) for name, speaker in TTS_MODEL_INFO)
