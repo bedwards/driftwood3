@@ -144,6 +144,8 @@ def create_prompt(persona, convo):
     Do not write any text that would appear outside the quotes (do not print- I said,)
     Extend the conversation in a realistic, believable way that this character would.
     Do not get stuck in repitition, segue into unexpected depths.
+    Do not write parentheticals.
+    Do not lead with '{persona["name"]}: '
 
     JUST WRITE THE SPOKEN DIALOGUE!!! NOTHING ELSE!!! NOTHING THE CHARACTER DOES NOT SPEAK!!!
 
