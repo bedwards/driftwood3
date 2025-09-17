@@ -38,6 +38,7 @@ async def stream_audio(ws, tts, text, sample_rate):
 
 async def stream_chat(ws, client, messages, prompt):
     tts = next(tts_models)
+    print(f"{tts.model_name} responding to {prompt[:42]}")
     sample_rate = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
     messages.append({"role":"user","content":prompt})
     await ws.send(f"META:SR={sample_rate}")
@@ -54,7 +55,6 @@ async def stream_chat(ws, client, messages, prompt):
     if buf.strip():
         await stream_audio(ws, tts, buf, sample_rate)
 
-    turn["n"] += 1
     messages.append({"role":"assistant","content":full})
     await ws.send("END")
 
