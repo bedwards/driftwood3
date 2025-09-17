@@ -19,22 +19,22 @@ DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.i
 assert DEVICE == "mps"
 
 TTS_MODEL_INFO = [
-    ("tts_models/en/ljspeech/fast_pitch", None),  # female
-    ("tts_models/en/blizzard2013/hifigan_v2", None),  # male
+    ("tts_models/en/ljspeech/fast_pitch", None, None),  # female
+    ("tts_models/en/blizzard2013/hifigan_v2", None, None),  # male
 ]
 
-tts_models = cycle((TTS(name).to(DEVICE), speaker) for name, speaker in TTS_MODEL_INFO)
+tts_models = cycle((TTS(name).to(DEVICE), speaker, lang) for name, speaker, lang in TTS_MODEL_INFO)
 SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
 
-async def stream_audio(ws, tts, speaker, text, sample_rate):
+async def stream_audio(ws, tts, speaker, lang, text, sample_rate):
     """Helper function to generate and stream audio for given text"""
-    audio = np.asarray(tts.tts(text, speaker=speaker, language="en"), dtype=np.float32)
+    audio = np.asarray(tts.tts(text, speaker=speaker, language=lang), dtype=np.float32)
     for i in range(0, len(audio), sample_rate // 2):
         await ws.send(audio[i:i + sample_rate // 2].tobytes())
 
 
 async def stream_chat(ws, client, messages, prompt):
-    tts, speaker = next(tts_models)
+    tts, speaker, lang = next(tts_models)
     print(f"{tts.model_name} responding to {prompt[:42]}")
     sample_rate = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
     messages.append({"role":"user","content":prompt})
@@ -46,11 +46,11 @@ async def stream_chat(ws, client, messages, prompt):
         full += tok; buf += tok
         await ws.send(tok)
         for s in SENT.findall(buf):
-            await stream_audio(ws, tts, speaker, s, sample_rate)
+            await stream_audio(ws, tts, speaker, lang, s, sample_rate)
         buf = SENT.sub("", buf)
 
     if buf.strip():
-        await stream_audio(ws, tts, speaker, buf, sample_rate)
+        await stream_audio(ws, tts, speaker, lang, buf, sample_rate)
 
     messages.append({"role":"assistant","content":full})
     await ws.send("END")
