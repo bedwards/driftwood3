@@ -19,13 +19,21 @@ assert DEVICE == "mps"
 
 # tts = TTS("tts_models/en/ljspeech/vits").to(DEVICE)
 # tts = TTS("tts_models/en/ljspeech/glow-tts").to(DEVICE)
-# tts = TTS("tts_models/en/vctk/glow-tts").to(DEVICE)
-tts = TTS("tts_models/en/vctk/sc-glow-tts").to(DEVICE)
+# tts = TTS("tts_models/multilingual/multi-dataset/your_tts").to(DEVICE)
+tts = TTS("tts_models/en/vctk/vits").to(DEVICE)
 
 SR = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
 FEMALE, MALE = "p225", "p226"
 turn = {"n": 0}
 SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
+
+
+async def stream_audio(ws, text, voice):
+    """Helper function to generate and stream audio for given text"""
+    audio = np.asarray(tts.tts(text, speaker=voice), dtype=np.float32)
+    for i in range(0, len(audio), SR // 2):
+        await ws.send(audio[i:i + SR // 2].tobytes())
+
 
 async def stream_chat(ws, client, messages, prompt):
     messages.append({"role":"user","content":prompt})
@@ -38,15 +46,11 @@ async def stream_chat(ws, client, messages, prompt):
         full += tok; buf += tok
         await ws.send(tok)
         for s in SENT.findall(buf):
-            audio = np.asarray(tts.tts(s, speaker=voice), dtype=np.float32)
-            for i in range(0, len(audio), SR // 2):
-                await ws.send(audio[i:i + SR // 2].tobytes())
+            await stream_audio(ws, s, voice)
         buf = SENT.sub("", buf)
 
     if buf.strip():
-        audio = np.asarray(tts.tts(s, speaker=voice), dtype=np.float32)
-        for i in range(0, len(audio), SR // 2):
-            await ws.send(audio[i:i + SR // 2].tobytes())
+        await stream_audio(ws, buf, voice)
 
     turn["n"] += 1
     messages.append({"role":"assistant","content":full})
