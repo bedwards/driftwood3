@@ -1,5 +1,6 @@
 # client.py
 # pip install websockets sounddevice numpy
+import random
 from itertools import cycle
 import asyncio, websockets, sounddevice as sd, numpy as np, re
 from config import websockets_kwargs
@@ -24,8 +25,9 @@ personas = [
 
 
 def create_prompt(persona, convo):
+    n_sentences = int(abs(random.gauss(1)) * 3) + 1
     prompt = f"""
-    Write the next line of dialogue (one to three sentences.)
+    Write the next line of dialogue ({n_sentences} sentences.)
     Flow from the coversation.
     """
     if len(convo) == 0:
@@ -47,9 +49,12 @@ def create_prompt(persona, convo):
     Do not print commentary, or pose meta-level questions.
     Do not put content in quotes. Just print what would be enclosed in quotes in a novel or short story by {persona["writer"]}.
     Do not write any text that would appear outside the quotes (do not print- I said,)
-    Write the next line of dialogue (one to three sentences.)
     Extend the conversation in a realistic, believable way that this character would.
     Do not get stuck in repitition, segue into unexpected depths.
+
+    JUST WRITE THE SPOKEN DIALOGUE!!! NOTHING ELSE!!! NOTHING THE CHARACTER DOES NOT SPEAK!!!
+
+    Write the next line of dialogue ({n_sentences} sentences.)
     """
 
 async def ask(ws, prompt):
