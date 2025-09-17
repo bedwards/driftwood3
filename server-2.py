@@ -6,7 +6,13 @@ from TTS.api import TTS
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "localhost:11434")
 HOST = OLLAMA_HOST if OLLAMA_HOST.startswith("http") else f"http://{OLLAMA_HOST}"
-MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+
+# MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+# MODEL="gemma2:9b"
+# MODEL="qwen2.5:7b"
+# MODEL="deepseek-r1:7b"
+MODEL="mistral:7b"
+# MODEL="llama3.2:3b"
 
 DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 assert DEVICE == "mps"
@@ -28,9 +34,14 @@ async def stream_chat(ws, client, messages, prompt):
             audio = np.asarray(tts.tts(s), dtype=np.float32)
             await ws.send(audio.tobytes())  # binary audio
         buf = SENT.sub("", buf)
+
     if buf.strip():
         audio = np.asarray(tts.tts(buf), dtype=np.float32)
-        await ws.send(audio.tobytes())
+
+        # await ws.send(audio.tobytes())
+        for i in range(0, len(audio), SR // 2):        # 0.5s @ 22.05 kHz ≈ 44,100 samples
+            await ws.send(audio[i:i + SR // 2].tobytes())
+
     messages.append({"role":"assistant","content":full})
     await ws.send("END")
 

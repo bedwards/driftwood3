@@ -25,7 +25,7 @@ async def ask(ws, prompt):
             else: sd.play(audio, sr or 22050, blocking=False)
 
 async def run():
-    async with websockets.connect(WS) as ws:
+    async with websockets.connect(WS, max_size=None) as ws:
         r1 = await ask(ws, "Is a hot dog a sandwich? Answer in one sentence.")
         r2 = await ask(ws, "How many licks does it take to get to the center of a Tootsie Pop? Answer in one sentence.")
         r3 = await ask(ws, "Justify your claim for the initial prompt in one or two sentences.")
