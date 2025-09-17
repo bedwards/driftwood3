@@ -37,7 +37,9 @@ async def handler(ws):
         await stream_chat(ws, client, messages, prompt)
 
 async def main():
-    async with websockets.serve(handler, "0.0.0.0", 8765, ping_interval=None, max_size=None):
+    port = 8765
+    print(f'Listening on {port}')
+    async with websockets.serve(handler, "0.0.0.0", port, ping_interval=None, max_size=None):
         await asyncio.Future()
 
 if __name__ == "__main__":
