@@ -1,12 +1,18 @@
-# README.md
+# driftwood3
 
 Two voices emerge from the latency between thought and speech. They are not quite themselves—channeling dead philosophers through the prose styles of novelists, discussing topics that span from liquid modernity to the prison-house of language.
 
-## Architecture
+## Simulated Séance
 
 The system operates across a WebSocket bridge at `ws://192.168.1.121:8765`. On one side, language models dream up responses. On the other, synthetic personas engage in impossible conversations.
 
-### Server
+---
+
+![driftwood](driftwood.png)
+
+---
+
+### Dialogue at the edge of signal and silence
 
 ```bash
 pip install websockets ollama TTS numpy torch
