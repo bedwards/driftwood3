@@ -27,36 +27,65 @@ SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
 
 async def stream_audio(ws, tts, speaker, lang, text, sample_rate):
     """Helper function to generate and stream audio for given text"""
-    try:
-        audio = np.asarray(tts.tts(text, speaker=speaker, language=lang), dtype=np.float32)
-    except (ZeroDivisionError, RuntimeError) as e:
-        print(f"{e!r} in {tts.model_name}")
+    # Skip empty or whitespace-only text
+    if not text or not text.strip():
         return
+        
+    try:
+        audio = np.asarray(tts.tts(text.strip(), speaker=speaker, language=lang), dtype=np.float32)
+        # Check for empty audio array
+        if len(audio) == 0:
+            return
+    except (ZeroDivisionError, RuntimeError) as e:
+        print(f"{e!r} in {tts.model_name} - skipping text: '{text[:50]}'")
+        return
+    except Exception as e:
+        print(f"Unexpected TTS error: {e!r} - skipping text: '{text[:50]}'")
+        return
+        
     for i in range(0, len(audio), sample_rate // 2):
-        await ws.send(audio[i:i + sample_rate // 2].tobytes())
+        try:
+            await ws.send(audio[i:i + sample_rate // 2].tobytes())
+        except websockets.exceptions.ConnectionClosed:
+            print("Connection closed during audio streaming")
+            break
 
 
 async def stream_chat(ws, client, messages, prompt):
-    llm, tts, speaker, lang = next(model)
-    print(f"{llm}.. {tts.model_name} responding to {prompt[:42]}")
-    sample_rate = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
-    messages.append({"role":"user","content":prompt})
-    await ws.send(f"META:SR={sample_rate}")
-    buf, full = "", ""
+    try:
+        llm, tts, speaker, lang = next(model)
+        print(f"{llm}.. {tts.model_name} responding to {prompt[:42]}")
+        sample_rate = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
+        messages.append({"role":"user","content":prompt})
+        await ws.send(f"META:SR={sample_rate}")
+        buf, full = "", ""
 
-    for part in client.chat(model=llm, messages=messages, stream=True):
-        tok = part["message"]["content"]
-        full += tok; buf += tok
-        await ws.send(tok)
-        for s in SENT.findall(buf):
-            await stream_audio(ws, tts, speaker, lang, s, sample_rate)
-        buf = SENT.sub("", buf)
+        for part in client.chat(model=llm, messages=messages, stream=True):
+            tok = part["message"]["content"]
+            full += tok; buf += tok
+            await ws.send(tok)
+            for s in SENT.findall(buf):
+                s_clean = s.strip()
+                if len(s_clean) > 3:  # Only process substantial sentences
+                    await stream_audio(ws, tts, speaker, lang, s_clean, sample_rate)
+            buf = SENT.sub("", buf)
 
-    if buf.strip():
-        await stream_audio(ws, tts, speaker, lang, buf, sample_rate)
+        if buf.strip() and len(buf.strip()) > 3:
+            await stream_audio(ws, tts, speaker, lang, buf.strip(), sample_rate)
 
-    messages.append({"role":"assistant","content":full})
-    await ws.send("END")
+        messages.append({"role":"assistant","content":full})
+        await ws.send("END")
+
+    except websockets.exceptions.ConnectionClosed:
+        print("Client disconnected during streaming")
+        return
+    except Exception as e:
+        print(f"Stream chat error: {e!r}")
+        try:
+            await ws.send("END")  # Try to signal end
+        except:
+            pass  # Connection already dead
+
 
 async def handler(ws):
     client = Client(host=OLLAMA_HOST); messages = []
@@ -71,9 +100,9 @@ async def main():
                 handler,
                 "0.0.0.0",
                 port,
-                ping_interval=20,     # Send ping every 20 seconds
-                ping_timeout=10,      # Wait 10 seconds for pong
-                close_timeout=10,     # Time to wait for clean close
+                ping_interval=30,     # Send ping every 20 seconds
+                ping_timeout=20,      # Wait 10 seconds for pong
+                close_timeout=15,     # Time to wait for clean close
                 max_size=1048576,     # 1MB message limit
                 max_queue=32,         # Limit queued messages
                 compression=None      # Disable compression for lower latency
