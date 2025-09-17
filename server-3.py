@@ -19,7 +19,8 @@ assert DEVICE == "mps"
 
 # tts = TTS("tts_models/en/ljspeech/vits").to(DEVICE)
 # tts = TTS("tts_models/en/ljspeech/glow-tts").to(DEVICE)
-tts = TTS("tts_models/en/vctk/glow-tts").to(DEVICE)
+# tts = TTS("tts_models/en/vctk/glow-tts").to(DEVICE)
+tts = TTS("tts_models/en/vctk/sc-glow-tts").to(DEVICE)
 
 SR = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
 FEMALE, MALE = "p225", "p226"
@@ -30,23 +31,21 @@ async def stream_chat(ws, client, messages, prompt):
     messages.append({"role":"user","content":prompt})
     await ws.send(f"META:SR={SR}")
     buf, full = "", ""
+    voice = FEMALE if (turn["n"] % 2 == 0) else MALE
+
     for part in client.chat(model=MODEL, messages=messages, stream=True):
         tok = part["message"]["content"]
         full += tok; buf += tok
-        await ws.send(tok)  # text token
+        await ws.send(tok)
         for s in SENT.findall(buf):
-            audio = np.asarray(tts.tts(s), dtype=np.float32)
-            await ws.send(audio.tobytes())  # binary audio
+            audio = np.asarray(tts.tts(s, speaker=voice), dtype=np.float32)
+            for i in range(0, len(audio), SR // 2):
+                await ws.send(audio[i:i + SR // 2].tobytes())
         buf = SENT.sub("", buf)
 
     if buf.strip():
-        voice = FEMALE if (turn["n"] % 2 == 0) else MALE
-
-        # audio = np.asarray(tts.tts(buf), dtype=np.float32)
         audio = np.asarray(tts.tts(s, speaker=voice), dtype=np.float32)
-
-        # await ws.send(audio.tobytes())
-        for i in range(0, len(audio), SR // 2):        # 0.5s @ 22.05 kHz ≈ 44,100 samples
+        for i in range(0, len(audio), SR // 2):
             await ws.send(audio[i:i + SR // 2].tobytes())
 
     turn["n"] += 1
