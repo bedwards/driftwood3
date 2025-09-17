@@ -7,9 +7,12 @@ from TTS.api import TTS
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "localhost:11434")
 HOST = OLLAMA_HOST if OLLAMA_HOST.startswith("http") else f"http://{OLLAMA_HOST}"
 MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
-DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
-tts = TTS("tts_models/en/ljspeech/vits").to(DEVICE)
+DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+assert DEVICE == "mps"
+# tts = TTS("tts_models/en/ljspeech/vits").to(DEVICE)
+tts = TTS("tts_models/en/ljspeech/glow-tts").to(DEVICE)
+
 SR = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
 SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
 
@@ -39,7 +42,8 @@ async def handler(ws):
 async def main():
     port = 8765
     print(f'Listening on {port}')
-    async with websockets.serve(handler, "0.0.0.0", port):
+    async with websockets.serve(
+            handler, "0.0.0.0", port, max_size=None, ping_interval=None):
         await asyncio.Future()
 
 if __name__ == "__main__":
