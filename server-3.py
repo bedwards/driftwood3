@@ -28,7 +28,7 @@ SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
 
 async def stream_audio(ws, tts, speaker, text, sample_rate):
     """Helper function to generate and stream audio for given text"""
-    audio = np.asarray(tts.tts(text, speaker=speaker), dtype=np.float32)
+    audio = np.asarray(tts.tts(text, speaker=speaker, language="en"), dtype=np.float32)
     for i in range(0, len(audio), sample_rate // 2):
         await ws.send(audio[i:i + sample_rate // 2].tobytes())
 
