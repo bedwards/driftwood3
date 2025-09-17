@@ -15,8 +15,8 @@ OLLAMA_HOST = "127.0.0.1:11434"
 # llama3.2:3b
 
 MODEL_INFO = [
-    ("mistral:7b", "tts_models/en/jenny/jenny", None, None),
-    ("gemma2:9b", "tts_models/en/ljspeech/tacotron2-DDC_ph", None, None),
+    ("gemma2:9b", "tts_models/en/jenny/jenny", None, None),
+    ("mistral:7b", "tts_models/en/ljspeech/tacotron2-DDC_ph", None, None),
 ]
 
 model = cycle(

@@ -5,6 +5,7 @@ from itertools import cycle
 import asyncio, websockets, sounddevice as sd, numpy as np, re
 from config import websockets_kwargs
 from topics import topics
+from names import names
 
 WS = "ws://192.168.1.121:8765"
 n_context = 5  # number of previous messages from the convo given as context in the prompt
@@ -97,16 +98,20 @@ writers = [
 
 personas = [
     {
-        "name": "Cindy",
+        "name": random.choice(names),
         "thinker": random.choice(thinkers),
         "writer": random.choice(writers),
     },
     {
-        "name": "Rebecca",
+        "name": random.choice(names),
         "thinker": random.choice(thinkers),
         "writer": random.choice(writers),
     },
 ]
+
+while personas[0]["name"] == personas[1]["name"]:
+    print("x")
+    personas[1]["name"] = random.choice(names)
 
 while personas[0]["thinker"] == personas[1]["thinker"]:
     print(".")
