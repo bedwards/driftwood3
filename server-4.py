@@ -55,7 +55,7 @@ async def stream_chat(ws, client, messages, prompt):
     await ws.send("END")
 
 async def handler(ws):
-    client = Client(host=HOST); messages = []
+    client = Client(host=OLLAMA_HOST); messages = []
     async for prompt in ws:
         await stream_chat(ws, client, messages, prompt)
 
