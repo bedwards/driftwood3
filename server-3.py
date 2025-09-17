@@ -17,10 +17,19 @@ MODEL="mistral:7b"
 DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 assert DEVICE == "mps"
 
+# crash
 # tts = TTS("tts_models/en/ljspeech/vits").to(DEVICE)
+# tts = TTS("tts_models/en/vctk/vits").to(DEVICE)
+
+# no male/female?
 # tts = TTS("tts_models/en/ljspeech/glow-tts").to(DEVICE)
+
+# tts = TTS("tts_models/en/ljspeech/tacotron2-DDC").to(DEVICE)
+# tts = TTS("tts_models/en/ljspeech/fastspeech2").to(DEVICE)
+# tts = TTS("tts_models/en/ljspeech/glow-tts").to(DEVICE)
+
 # tts = TTS("tts_models/multilingual/multi-dataset/your_tts").to(DEVICE)
-tts = TTS("tts_models/en/vctk/vits").to(DEVICE)
+tts = TTS("tts_models/en/vctk/fast_pitch").to(DEVICE)
 
 SR = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
 FEMALE, MALE = "p225", "p226"
