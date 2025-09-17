@@ -15,15 +15,14 @@ HOST = OLLAMA_HOST if OLLAMA_HOST.startswith("http") else f"http://{OLLAMA_HOST}
 MODEL="mistral:7b"
 # MODEL="llama3.2:3b"
 
-DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-assert DEVICE == "mps"
+# DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
 TTS_MODEL_INFO = [
     ("tts_models/en/jenny/jenny", None, None),
     ("tts_models/en/ljspeech/tacotron2-DDC_ph", None, None),
 ]
 
-tts_models = cycle((TTS(name).to(DEVICE), speaker, lang) for name, speaker, lang in TTS_MODEL_INFO)
+tts_models = cycle((TTS(name).to("cpu"), speaker, lang) for name, speaker, lang in TTS_MODEL_INFO)
 SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
 
 async def stream_audio(ws, tts, speaker, lang, text, sample_rate):
