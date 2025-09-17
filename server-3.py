@@ -1,6 +1,7 @@
 # server.py
 # pip install websockets ollama TTS numpy torch
 import os, asyncio, numpy as np, websockets, torch, re
+from itertools import cycle
 from ollama import Client
 from TTS.api import TTS
 
@@ -17,53 +18,41 @@ MODEL="mistral:7b"
 DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 assert DEVICE == "mps"
 
-# crash
-# tts = TTS("tts_models/en/ljspeech/vits").to(DEVICE)
-# tts = TTS("tts_models/en/vctk/vits").to(DEVICE)
+TTS_MODEL_NAMES = [
+    "tts_models/en/ljspeech/fast_pitch",
+    "tts_models/en/ljspeech/glow-tts",
+    "tts_models/en/ljspeech/speedy-speech",
+    "tts_models/en/ljspeech/tacotron2-DDC_ph",
+]
 
-# no male/female?
-# tts = TTS("tts_models/en/ljspeech/glow-tts").to(DEVICE)
-
-# tts = TTS("tts_models/en/ljspeech/tacotron2-DDC").to(DEVICE)
-# tts = TTS("tts_models/en/ljspeech/fastspeech2").to(DEVICE)
-# tts = TTS("tts_models/en/ljspeech/glow-tts").to(DEVICE)
-
-# tts = TTS("tts_models/multilingual/multi-dataset/your_tts").to(DEVICE)
-tts = TTS("tts_models/en/vctk/fast_pitch").to(DEVICE)
-
-SR = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
-
-# Male: p225, p228, p236
-# Female: p262, p270, p315
-FEMALE, MALE = "p315", "p236"
-
-turn = {"n": 0}
+tts_models = cycle([TTS(name).to(DEVICE) for name in TTS_MODEL_NAMES])
 SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
 
 
-async def stream_audio(ws, text, voice):
+async def stream_audio(ws, tts, text, sample_rate):
     """Helper function to generate and stream audio for given text"""
-    audio = np.asarray(tts.tts(text, speaker=voice), dtype=np.float32)
-    for i in range(0, len(audio), SR // 2):
-        await ws.send(audio[i:i + SR // 2].tobytes())
+    audio = np.asarray(tts.tts(text), dtype=np.float32)
+    for i in range(0, len(audio), sample_rate // 2):
+        await ws.send(audio[i:i + sample_rate // 2].tobytes())
 
 
 async def stream_chat(ws, client, messages, prompt):
+    tts = next(tts_models)
+    sample_rate = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
     messages.append({"role":"user","content":prompt})
-    await ws.send(f"META:SR={SR}")
+    await ws.send(f"META:SR={sample_rate}")
     buf, full = "", ""
-    voice = FEMALE if (turn["n"] % 2 == 0) else MALE
 
     for part in client.chat(model=MODEL, messages=messages, stream=True):
         tok = part["message"]["content"]
         full += tok; buf += tok
         await ws.send(tok)
         for s in SENT.findall(buf):
-            await stream_audio(ws, s, voice)
+            await stream_audio(ws, tts, s, sample_rate)
         buf = SENT.sub("", buf)
 
     if buf.strip():
-        await stream_audio(ws, buf, voice)
+        await stream_audio(ws, tts, buf, sample_rate)
 
     turn["n"] += 1
     messages.append({"role":"assistant","content":full})
