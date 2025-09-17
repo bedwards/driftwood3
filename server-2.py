@@ -6,7 +6,7 @@ from TTS.api import TTS
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "localhost:11434")
 HOST = OLLAMA_HOST if OLLAMA_HOST.startswith("http") else f"http://{OLLAMA_HOST}"
-MODEL = os.getenv("OLLAMA_MODEL", "llama3.1")
+MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
 tts = TTS("tts_models/en/ljspeech/vits").to(DEVICE)
