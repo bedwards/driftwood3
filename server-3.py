@@ -31,11 +31,7 @@ assert DEVICE == "mps"
 # tts = TTS("tts_models/multilingual/multi-dataset/your_tts").to(DEVICE)
 tts = TTS("tts_models/en/vctk/fast_pitch").to(DEVICE)
 
-speakers = tts.list_speaker_idxs()
-print(speakers)
-
 SR = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
-
 
 # Male: p225, p228, p236
 # Female: p262, p270, p315
