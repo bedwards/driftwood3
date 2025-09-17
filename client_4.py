@@ -5,7 +5,7 @@ import asyncio, websockets, sounddevice as sd, numpy as np, re
 from config import websockets_kwargs
 
 WS = "ws://192.168.1.121:8765"
-n_context = 22  # number of previous messages from the convo given as context in the prompt
+n_context = 5  # number of previous messages from the convo given as context in the prompt
 
 topic = "Certainty and scarcity in jason Hickel's Less is More and Roberto Bolaño's 2666"
 
@@ -26,9 +26,12 @@ personas = [
 def create_prompt(persona, convo):
     prompt = f"""
     Write the next line of dialogue (one to three sentences.)
-    The topic is {topic}.
     Flow from the coversation.
     """
+    if len(convo) == 0:
+        prompt += f"""
+        The topic is {topic}. But do not include the words found in the topic directly in your reponse.
+        """
     if len(convo) % 2 == 0:
         speakers = ["You", personas[1]["name"]]
     else:
@@ -45,6 +48,8 @@ def create_prompt(persona, convo):
     Do not put content in quotes. Just print what would be enclosed in quotes in a novel or short story by {persona["writer"]}.
     Do not write any text that would appear outside the quotes (do not print- I said,)
     Write the next line of dialogue (one to three sentences.)
+    Extend the conversation in a realistic, believable way that this character would.
+    Do not get stuck in repitition, segue into unexpected depths.
     """
 
 async def ask(ws, prompt):
@@ -79,6 +84,7 @@ async def run():
             Stick to the manner in which the character speaks, not their beliefs or values.
             Briefly. No meta-commentary. Only instructions to a would-be writer.
             Do not give her a name. Her name is {persona["name"]}
+            Do not give examples.
             """
             persona['description'] = await ask(ws, prompt)
         convo = []
