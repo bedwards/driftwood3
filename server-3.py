@@ -18,26 +18,23 @@ MODEL="mistral:7b"
 DEVICE = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 assert DEVICE == "mps"
 
-TTS_MODEL_NAMES = [
-    "tts_models/en/ljspeech/fast_pitch",
-    "tts_models/en/ljspeech/glow-tts",
-    "tts_models/en/ljspeech/speedy-speech",
-    "tts_models/en/ljspeech/tacotron2-DDC_ph",
+TTS_MODEL_INFO = [
+    ("tts_models/multilingual/multi-dataset/xtts_v2", "p_225"),  # male
+    ("tts_models/en/ljspeech/fast_pitch", None),  # female
 ]
 
-tts_models = cycle([TTS(name).to(DEVICE) for name in TTS_MODEL_NAMES])
+tts_models = cycle((TTS(name).to(DEVICE), speaker) for name, speaker in TTS_MODEL_INFO)
 SENT = re.compile(r"([^.?!\n]+[.?!\n]+)")
 
-
-async def stream_audio(ws, tts, text, sample_rate):
+async def stream_audio(ws, tts, speaker, text, sample_rate):
     """Helper function to generate and stream audio for given text"""
-    audio = np.asarray(tts.tts(text), dtype=np.float32)
+    audio = np.asarray(tts.tts(text, speaker=speaker), dtype=np.float32)
     for i in range(0, len(audio), sample_rate // 2):
         await ws.send(audio[i:i + sample_rate // 2].tobytes())
 
 
 async def stream_chat(ws, client, messages, prompt):
-    tts = next(tts_models)
+    tts, speaker = next(tts_models)
     print(f"{tts.model_name} responding to {prompt[:42]}")
     sample_rate = getattr(getattr(tts, "synthesizer", None), "output_sample_rate", 22050)
     messages.append({"role":"user","content":prompt})
@@ -49,11 +46,11 @@ async def stream_chat(ws, client, messages, prompt):
         full += tok; buf += tok
         await ws.send(tok)
         for s in SENT.findall(buf):
-            await stream_audio(ws, tts, s, sample_rate)
+            await stream_audio(ws, tts, speaker, s, sample_rate)
         buf = SENT.sub("", buf)
 
     if buf.strip():
-        await stream_audio(ws, tts, buf, sample_rate)
+        await stream_audio(ws, tts, speaker, buf, sample_rate)
 
     messages.append({"role":"assistant","content":full})
     await ws.send("END")
